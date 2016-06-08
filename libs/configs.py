@@ -2,8 +2,8 @@ import os
 import ConfigParser
 
 # Hidden configs file
-CONFIG_FILE =  os.path.expanduser('.glacier.conf')
-
+CONFIG_FILE =  os.path.join(os.path.dirname(__file__),'.glacier.cfg')
+my_conf = None
 
 # configs keys
 CONFIG_KEY = {
@@ -11,13 +11,9 @@ CONFIG_KEY = {
     'AWS_SECRET_ACCESS_KEY': 'AWS_SECRET_ACCESS_KEY',
     'AWS_REGION': 'AWS_REGION'
 }
+
 # Load configs values
-
-
-
-
-
-Name = ConfigSectionMap("SectionOne")['name']
+# Name = ConfigSectionMap("SectionOne")['name']
 
 
 class MyConf(object):
@@ -25,27 +21,26 @@ class MyConf(object):
                  filename=None,
                  logs=False):
         self._enable_logs = logs
-        self.AWS_ACCESS_KEY_ID = ''
-        self.AWS_SECRET_ACCESS_KEY = ''
-        self.AWS_REGION = ''
         self._CFG_FILE = filename
         self._Config = ConfigParser.ConfigParser()
         self._CONFIG_SEC = [{'name': 'AWS_CREDENTIALS',
-                             'cfg_keys': ['AWS_ACCESS_KEY_ID',
-                                          'AWS_SECRET_ACCESS_KEY',
-                                          'AWS_REGION']}]
+                             'cfg_keys': ['ACCESS_KEY_ID',
+                                          'SECRET_ACCESS_KEY',
+                                          'REGION',
+                                          'VAULT_NAME']}]
 
-    def _log(self, msg):
-        if True:
-            print msg
+    def _log(self, msg, error=False):
+        if self._enable_logs:
+            print '{typeE}: {msg}'.format(msg=msg, typeE= 'ERROR' if error else 'INFO')
 
     def _Load_file(self):
+        self._log('INFO: CARGANDO [{cfgFile}]'.format(cfgFile=self._CFG_FILE))
         try:
-            self._log('INFO: CARGANDO [{cfgFile}]'.format(cfgFile=CONFIG_FILE))
-            self._Config.read(conf_filename)
+            self._Config.read(self._CFG_FILE)
+            self._log('INFO: Carga correcta!')
         except IOError:
-            self._log('ERROR(FATAL): Imposible el archivo de '\
-                      'configuracion: {var_name}.'.format(var_name=e))
+            self._log('Imposible el archivo de '\
+                      'configuracion: {var_name}.'.format(var_name=e), True)
             raise
 
     def _ConfigSectionMap(self, section):
@@ -65,14 +60,20 @@ class MyConf(object):
     def load(self):
         try:
             self._Load_file()
-            for sec self._CONFIG_KEY
         except IOError:
-            exit(1)
-        except AttributeError:
-            self._log('No pida boludeces...')
-            exit(1)
+            raise
+
+        for sec in self._CONFIG_SEC:
+            self._log('loading conf for {sec}'.format(sec=sec['name']))
+            for k in  sec['cfg_keys']:
+                self._log('Conf property: {property}'.format(property=k))
+                try:
+                    setattr(MyConf, k, self._ConfigSectionMap(sec['name'])[k.lower()])
+                except Exception as e:
+                    self._log('No pida boludeces...', True)
 
 try:
-    my_conf = MyConf(CONFIG_FILE, logs=True)
+    my_conf = MyConf(CONFIG_FILE)
+    my_conf.load()
 except Exception as e:
     print 'fallo carga de configuracion...'

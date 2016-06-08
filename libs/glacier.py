@@ -10,7 +10,7 @@ from boto.glacier.exceptions import UnexpectedHTTPResponseError
 
 
 
-class GlacierVault:
+class Glacier:
     """
     Wrapper for uploading/download archive to/from Amazon Glacier Vault
     Makes use of shelve to store archive id corresponding to filename and
@@ -30,8 +30,8 @@ class GlacierVault:
         """
         Initialize the vault
         """
-        self._ACCESS_KEY_ID = aws_access_key_id
-        self._SECRET_ACCESS_KEY = aws_secret_access_key
+        self._ACCESS_KEY_ID = access_key_id
+        self._SECRET_ACCESS_KEY = secret_access_key
         self._AWS_REGION_NAME = region_name
         layer2 = boto.connect_glacier(aws_access_key_id = access_key_id,
                                       aws_secret_access_key = secret_access_key,
