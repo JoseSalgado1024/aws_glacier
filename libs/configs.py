@@ -23,11 +23,13 @@ class MyConf(object):
         self._enable_logs = logs
         self._CFG_FILE = filename
         self._Config = ConfigParser.ConfigParser()
-        self._CONFIG_SEC = [{'name': 'AWS_CREDENTIALS',
+        self._CONFIG_SEC = [{'name': 'GENERAL',
                              'cfg_keys': ['ACCESS_KEY_ID',
                                           'SECRET_ACCESS_KEY',
                                           'REGION',
-                                          'VAULT_NAME']}]
+                                          'VAULT_NAME',
+                                          'BUCKET_NAME',
+                                          'NAME_REGEX']}]
 
     def _log(self, msg, error=False):
         if self._enable_logs:

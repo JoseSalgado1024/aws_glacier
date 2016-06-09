@@ -1,121 +1,95 @@
 #!/usr/bin/python
 # encoding: utf-8
-import os
-import shelve
-import boto.glacier
 import boto
-from boto.glacier.exceptions import UnexpectedHTTPResponseError
+import re
+from errHandling import *
 
 
 
 
 
-class Glacier:
+class Glacier(object):
     """
-    Wrapper for uploading/download archive to/from Amazon Glacier Vault
-    Makes use of shelve to store archive id corresponding to filename and
-    waiting jobs.
-    Backup:
-    >>> GlacierVault("myvault")upload("myfile")
-
-    Restore:
-    >>> GlacierVault("myvault")retrieve("myfile")
-    or to wait until the job is ready:
-    >>> GlacierVault("myvault")retrieve("serverhealth2.py", True)
+    UNA CLASE.
     """
-    def __init__(self, vault_name,
-                 access_key_id,
-                 secret_access_key,
-                 region_name):
+    def __init__(self,
+                access_key_id=None,
+                secret_access_key=None,
+                region_name='us-east-1',
+                bucket=None,
+                name_regex=None,
+                restore_for=5):
         """
-        Initialize the vault
+        TODO
         """
-        self._ACCESS_KEY_ID = access_key_id
-        self._SECRET_ACCESS_KEY = secret_access_key
-        self._AWS_REGION_NAME = region_name
-        layer2 = boto.connect_glacier(aws_access_key_id = access_key_id,
-                                      aws_secret_access_key = secret_access_key,
-                                      region_name = region_name)
-        self.vault = layer2.get_vault(vault_name)
-
-
-    def upload(self, filename):
-        """
-        Upload filename and store the archive id for future retrieval
-        """
-        archive_id = self.vault.create_archive_from_file(filename,
-                                                         description=filename)
-
-        # Storing the filename => archive_id data.
-        with glacier_shelve() as d:
-            if not d.has_key("archives"):
-                d["archives"] = dict()
-
-            archives = d["archives"]
-            archives[filename] = archive_id
-            d["archives"] = archives
-
-    def get_archive_id(self, filename):
-        """
-        Get the archive_id corresponding to the filename
-        """
-        with glacier_shelve() as d:
-            if not d.has_key("archives"):
-                d["archives"] = dict()
-
-            archives = d["archives"]
-
-            if filename in archives:
-                return archives[filename]
-
-        return None
-
-    def retrieve(self, filename, wait_mode=False):
-        """
-        Initiate a Job, check its status, and download the archive when it's completed.
-        """
-        archive_id = self.get_archive_id(filename)
-        if not archive_id:
-            return
-
-        with glacier_shelve() as d:
-            if not d.has_key("jobs"):
-                d["jobs"] = dict()
-
-            jobs = d["jobs"]
-            job = None
-
-            if filename in jobs:
-                # The job is already in shelve
-                job_id = jobs[filename]
-                try:
-                    job = self.vault.get_job(job_id)
-                except UnexpectedHTTPResponseError: # Return a 404 if the job is no more available
-                    pass
-
-            if not job:
-                # Job initialization
-                job = self.vault.retrieve_archive(archive_id)
-                jobs[filename] = job.id
-                job_id = job.id
-
-            # Commiting changes in shelve
-            d["jobs"] = jobs
-
-        print "Job {action}: {status_code} ({creation_date}/{completion_date})".format(**job.__dict__)
-
-        # checking manually if job is completed every 10 secondes instead of using Amazon SNS
-        if wait_mode:
-            import time
-            while 1:
-                job = self.vault.get_job(job_id)
-                if not job.completed:
-                    time.sleep(10)
-                else:
-                    break
-
-        if job.completed:
-            print "Downloading..."
-            job.download_to_file(filename)
+        if secret_access_key == None or secret_access_key == None or region_name == None:
+            raise BadAuthData()
         else:
-            print "Not completed yet"
+            setattr(Glacier, '_ACCESS_KEY_ID', access_key_id)
+            setattr(Glacier, '_SECRET_ACCESS_KEY', secret_access_key)
+            setattr(Glacier, '_REGION_NAME', region_name)
+
+        if bucket == None or name_regex == None:
+            raise BadFileOrBucket(bucket, name_regex)
+        else:
+            setattr(Glacier, '_BUCKET_NAME', bucket)
+            setattr(Glacier, '_NAME_REGEX', name_regex)
+            setattr(Glacier, '_STORE_CLASS', 'GLACIER')
+
+        if not type(restore_for) is int or restore_for not in range (1,10):
+            raise BadRestoreDays
+        else:
+            setattr(Glacier,
+                    '_RESTORE_FOR',
+                    restore_for)
+        try:
+            setattr(Glacier,
+                    '_s3',
+                    boto.connect_s3(aws_access_key_id=self._ACCESS_KEY_ID,
+                                    aws_secret_access_key=self._SECRET_ACCESS_KEY))
+        except Exception as e:
+            raise BadAuthData(self._ACCESS_KEY_ID,
+                              self._SECRET_ACCESS_KEY,
+                              self._REGION_NAME)
+        try:
+            setattr(Glacier,
+                    'selected_bucket',
+                    self._s3.get_bucket(self._BUCKET_NAME))
+        except Exception as e:
+            raise BucketNotExists
+
+    def restore_file(self, filename, days=None):
+        """Comentario."""
+        d = self._RESTORE_FOR if days == None else days
+        if re.search(self._NAME_REGEX, filename) == None:
+            print '\"filename\", mal formado. [{f}]'.format(f=filename)
+            return False
+        try:
+            key = self.selected_bucket.get_key(filename)
+        except Exception:
+            print 'No existe el archivo: {f}'.format(f=filename)
+            return False
+        try:
+            key.restore(days=d)
+        except Exception:
+            return False
+        return True
+
+    def restore_list_of_files(self, list_of_files=None):
+        if list_of_files==None or not type(list_of_files) is list:
+            raise BadFileListToRestore
+        else:
+            for filename in list_of_files:
+                if self.restore_file(filename):
+                    if self.is_available(filename):
+                        print 'Esta disponible el archivo {f}, puede ser descargado..'.format(f=filename)
+                    else:
+                        print 'El archivo {f}, aun no puede ser descargado..'.format(f=filename)
+                else:
+                    print 'Imposible restaurar: {f}'.format(f=filename)
+        return True
+
+    def is_available(self, filename):
+        """Comentario."""
+        key = self.selected_bucket.get_key(filename)
+        return key.ongoing_restore
