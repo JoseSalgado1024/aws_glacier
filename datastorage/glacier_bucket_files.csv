@@ -1,4 +1,4 @@
-filename, comercio_id, etl_run, storage_class, file_type, Downloadable, upload_timestamp
+filename,comercio_id,etl_run,storage_class,file_type,Downloadable,upload_timestamp
 sepa_1_comercio-sepa-10_2016-04-22_03-46-32.zip, 10, 10:00hs, GLACIER, zip, FALSE, 2016/04/22 03:46:32
 sepa_1_comercio-sepa-10_2016-04-23_02-38-46.zip, 10, 10:00hs, GLACIER, zip, FALSE, 2016/04/23 02:38:46
 sepa_1_comercio-sepa-10_2016-04-24_02-37-00.zip, 10, 10:00hs, GLACIER, zip, FALSE, 2016/04/24 02:37:00

@@ -37,7 +37,7 @@ def get_args():
     parser.add_argument('-l',
                         '--log',
                         type=str,
-                        help=' Archivo csv que contiene lista de archivos a descargar...',
+                        help='Path log file',
                         required=False)
     args = parser.parse_args()
     datafile = args.datafile
