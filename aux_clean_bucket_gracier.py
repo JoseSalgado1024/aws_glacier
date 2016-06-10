@@ -42,7 +42,6 @@ def main():
     p = 0
     for sepa_zip in to_download:
         s = dowload_s3_data(GLACIER, sepa_zip, FOLDER)
-        # print '{porcentaje}% \t{filename}\t{status}'.format(porcentaje=int((p*100)/len(to_download)), filename=sepa_zip, status=s)
         p = p + 1
 
     #print '\n'.join(to_download)

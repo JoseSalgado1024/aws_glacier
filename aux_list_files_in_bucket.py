@@ -38,7 +38,7 @@ FOLDER='bucket_glacier'
 DEFAULT_BUCKET='comercio-sepa-glacier'
 S3 = boto3.resource('s3')
 SELECTED_BUCKET = S3.Bucket(DEFAULT_BUCKET)
-DEFAULT_STORAGE_CLASS='standard'
+DEFAULT_STORAGE_CLASS='glacier'
 VALID_FILNAME_REGEX = u'sepa_(?P<run_time>[0-9]{1,2})_comercio-sepa-(?P<comer'\
                       u'cio_id>[0-9]{1,2})_(?P<year>[0-9]{4})-(?P<month>[0-9]'\
                       u'{2})-(?P<day>[0-9]{2})_(?P<hours>[0-9]{2})-(?P<mins>['\
