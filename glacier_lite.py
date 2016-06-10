@@ -1,5 +1,6 @@
 #!/usr/bin/python
 # encoding: utf-8
+
 """
         .-.
        /_ _\
@@ -32,7 +33,7 @@ def get_args():
     parser.add_argument('-f',
                         '--datafile',
                         type=str,
-                        help=' Archivo csv que contiene lista de archivos a descargar...',
+                        help=' CSV que contiene lista de archivos restaurar',
                         required=True)
     parser.add_argument('-l',
                         '--log',
@@ -47,7 +48,6 @@ def get_args():
 
 def main():
     datafile, log = get_args()
-
     try:
         glacier = Glacier(bucket=my_conf.BUCKET_NAME,
                           access_key_id=my_conf.ACCESS_KEY_ID,

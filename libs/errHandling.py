@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# encoding: utf-8
+
 class CustomExcept(Exception):
     def __init__(self, message='Ups! something going wrong...', errors=None):
         super(CustomExcept, self).__init__(message)

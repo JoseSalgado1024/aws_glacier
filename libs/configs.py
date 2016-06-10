@@ -3,9 +3,10 @@
 
 import os
 import ConfigParser
+from  screen_prints import *
 
 # Hidden configs file
-CONFIG_FILE =  os.path.join(os.path.dirname(__file__),'.glacier.cfg')
+CONFIG_FILE =  os.path.join(os.path.dirname(__file__),'.glacier_foo.cfg')
 my_conf = None
 
 # configs keys
@@ -14,10 +15,6 @@ CONFIG_KEY = {
     'AWS_SECRET_ACCESS_KEY': 'AWS_SECRET_ACCESS_KEY',
     'AWS_REGION': 'AWS_REGION'
 }
-
-# Load configs values
-# Name = ConfigSectionMap("SectionOne")['name']
-
 
 class MyConf(object):
     def __init__(self,
@@ -39,14 +36,13 @@ class MyConf(object):
             print '{typeE}: {msg}'.format(msg=msg, typeE= 'ERROR' if error else 'INFO')
 
     def _Load_file(self):
-        self._log('INFO: CARGANDO [{cfgFile}]'.format(cfgFile=self._CFG_FILE))
+        self._log(mensages.LOADING_CONF.format(f=self._CFG_FILE))
         try:
             self._Config.read(self._CFG_FILE)
-            self._log('INFO: Carga correcta!')
+            self._log(mensages.FILE_LOAD_FAIL.format(f=self._CFG_FILE))
         except IOError:
-            self._log('Imposible el archivo de '\
-                      'configuracion: {var_name}.'.format(var_name=e), True)
-            raise
+            self._log(mensages.CONF_FILE_LOAD_FAIL.format(f=self._CFG_FILE), True)
+            raise IOError
 
     def _ConfigSectionMap(self, section):
         dict1 = {}
@@ -66,7 +62,7 @@ class MyConf(object):
         try:
             self._Load_file()
         except IOError:
-            raise
+            raise IOError
 
         for sec in self._CONFIG_SEC:
             self._log('loading conf for {sec}'.format(sec=sec['name']))
@@ -75,10 +71,14 @@ class MyConf(object):
                 try:
                     setattr(MyConf, k, self._ConfigSectionMap(sec['name'])[k.lower()])
                 except Exception as e:
-                    self._log('No pida boludeces...', True)
+                    self._log('NO EXISTE...', True)
+
+my_conf = MyConf(CONFIG_FILE)
+my_conf.load()
 
 try:
     my_conf = MyConf(CONFIG_FILE)
     my_conf.load()
 except Exception as e:
-    print 'fallo carga de configuracion...'
+    print mensages.CONF_FILE_LOAD_FAIL.format(f=CONFIG_FILE)
+    exit(1)

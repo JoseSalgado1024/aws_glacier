@@ -5,6 +5,7 @@
 import boto
 import re
 from errHandling import *
+from  screen_prints import *
 
 class Glacier(object):
     """
@@ -123,18 +124,18 @@ class Glacier(object):
         """
         d = self._RESTORE_FOR if days == None else days
         if re.search(self._NAME_REGEX, filename) == None:
-            self._log('\"filename\", mal formado. [{f}]'.format(f=filename), True)
+            self._log(mensages.BAD_FILENAME.format(f=filename), True)
             return False
         try:
             key = self.selected_bucket.get_key(filename)
         except Exception:
-            self._log('No existe el archivo: {f}'.format(f=filename), True)
+            self._log(mensages.FILE_NOT_EXISTS.format(f=filename), True)
             return False
         try:
             key.restore(days=d)
         except Exception:
             print e
-            self._log('La clase de \"{f}\" no es \"GLACIER\"'.format(f=filename), True)
+            self._log(mensages.FILE_EXISTS_BUT_NOT_AVAILABLE_GLACIER.format(f=filename), True)
             return False
         return True
 
@@ -162,11 +163,12 @@ class Glacier(object):
             for filename in list_of_files:
                 if self.restore_file(filename):
                     if self.is_available(filename):
-                        self._log('Esta disponible el archivo \"{f}\" y puede ser descargado..'.format(f=filename))
+                        self._log(mensages.FILE_READY_FOR_DOWNLOAD.format(f=filename))
                     else:
-                        self._log('El archivo {f}, aun no puede ser descargado..'.format(f=filename))
+                        self._log(mensages.FILE_EXISTS_BUT_NOT_AVAILABLE.format(f=filename))
+                        return False
                 else:
-                    self._log('Imposible restaurar: \"{f}\".'.format(f=filename), True)
+                    self._log(mensages.CANT_RESTORE_FILE.format(f=filename), True)
         return True
 
     def dowload_s3_data(self,
@@ -231,5 +233,7 @@ class Glacier(object):
               - Type: Boolean.
         """
         key = self.selected_bucket.get_key(filename)
-        self._log()
-        return key.ongoing_restore
+        file_status = key.ongoing_restore
+        msg_status = 'READY' if file_status else 'NOT-READY'
+        self._log(mensages.FILE_NOT_NEED_BE_RESTORED.format(f=filename, s=msg_status))
+        return file_status
