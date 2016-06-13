@@ -41,3 +41,15 @@ class BadFileListToRestore(Exception):
         super(BadFileListToRestore, self).__init__('\n\"LIST_OF_FILES\" es invalido\n'\
                                                    'Chequear:\n'\
                                                    '+ LIST_OF_FILES=[\'f0.ext\',\'f1.ext\',\'..\',\'fn.ext\']\n')
+
+class BadMsgs(Exception):
+    def __init__(self):
+        super(BadMsgs, self).__init__('No están disponibles todos los textos en todos los lenguajes.')
+
+class LanguageNotExists(Exception):
+    def __init__(self):
+        super(LanguageNotExists, self).__init__('No existe el lenguaje seleccionado.')
+
+class LanguageLoadFail(Exception):
+    def __init__(self):
+        super(LanguageLoadFail, self).__init__('Fallo en carga de mensajes..')

@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # encoding: utf-8
-
+from errHandling import *
 
 LANGUAGES = ['ES', 'EN']
 
@@ -34,17 +34,6 @@ SCREEN_PRINTS = [
     {'UNKNOW_ERROR': ['Error desconocido...', 'Unknow error...']}
 ]
 
-class BadMsgs(Exception):
-    def __init__(self):
-        super(BadMsgs, self).__init__('No están disponibles todos los textos en todos los lenguajes.')
-
-class LanguageNotExists(Exception):
-    def __init__(self):
-        super(LanguageNotExists, self).__init__('No existe el lenguaje seleccionado.')
-
-class LanguageLoadFail(Exception):
-    def __init__(self):
-        super(LanguageLoadFail, self).__init__('Fallo en carga de mensajes..')
 
 
 class Messages(object):

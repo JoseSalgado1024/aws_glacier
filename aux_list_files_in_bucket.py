@@ -96,7 +96,8 @@ def clear_prof_data():
 @profile
 def dispatch_threads_download(zip_files_list,
                               headers=False,
-                              storage_class=DEFAULT_STORAGE_CLASS.upper()):
+                              storage_class=DEFAULT_STORAGE_CLASS.upper(),
+                              dst_folder=FOLDER):
     get_this = zip_files_list if not headers else zip_files_list[1:len(zip_files_list)]
 
     global MAX_DOWNLOAD_THREADS
@@ -106,7 +107,13 @@ def dispatch_threads_download(zip_files_list,
     for zip_file in zip_files_list:
         if zip_file[3] == storage_class or zip_file[3] == storage_class.lower():
             if MAX_DOWNLOAD_THREADS > actual_download_thread:
-                p = threading.Thread(target=dowload_s3_data, args=[zip_file[0]])
+                #
+                r = re.search(VALID_FILNAME_REGEX, zip_file[0])
+                df = os.path.join(FOLDER, have_all_fields_required(r, FILENAME_PARTS, True)['bucket'])
+                if not os.path.exists(df):
+                    os.makedirs(df)
+                # Ok launch thread!!
+                p = threading.Thread(target=dowload_s3_data, args=[**{'remote_file':zip_file[0], 'dst_folder': df}])
                 p.start()
             else:
                 while MAX_DOWNLOAD_THREADS <= actual_download_thread:
@@ -115,7 +122,9 @@ def dispatch_threads_download(zip_files_list,
                 p.start()
 
 @profile
-def have_all_fields_required(regex_result_group, vars_required):
+def have_all_fields_required(regex_result_group,
+                             vars_required,
+                             dict_resp=False):
     if type(regex_result_group) is None:
         return False
     for v in vars_required:
@@ -124,12 +133,25 @@ def have_all_fields_required(regex_result_group, vars_required):
                 return False
         except Exception as e:
             return False
-    return 'sepa_{etlr}_comercio-sepa-{cid}_{year}-{month}-{day}'.format(cid=regex_result_group.group('comercio_id'),
-                                                                         etlr=regex_result_group.group('run_time'),
-                                                                         year=regex_result_group.group('year'),
-                                                                         month=regex_result_group.group('month'),
-                                                                         day=regex_result_group.group('day'))
+    if not dict_resp:
+        return 'sepa_{etlr}_comercio-sepa-{cid}_{year}-{month}-{day}'.format(cid=regex_result_group.group('comercio_id'),
+                                                                             etlr=regex_result_group.group('run_time'),
+                                                                             year=regex_result_group.group('year'),
+                                                                             month=regex_result_group.group('month'),
+                                                                             day=regex_result_group.group('day'))
+    else:
+        return {
+            'comercio_id':regex_result_group.group('comercio_id'),
+            'etl_run': regex_result_group.group('run_time'),
+            'timestamp': '{y}/{m}/{d}T{h}-{M}-{s}'.format(y=regex_result_group.group('year'),
+                                                          m=regex_result_group.group('month'),
+                                                          d=regex_result_group.group('day'),
+                                                          h=regex_result_group.group('hours'),
+                                                          M=regex_result_group.group('mins'),
+                                                          s=regex_result_group.group('seconds')),
+            'bucket': 'comercio-sepa-{id}'.format(id=regex_result_group.group('comercio_id')),
 
+        }
 @profile
 def dowload_s3_data(remote_file,
                     bucket=DEFAULT_BUCKET,

@@ -1,11 +1,10 @@
 #!/usr/bin/python
 # encoding: utf-8
-
-
 import boto
 import re
 from errHandling import *
-from  screen_prints import *
+from screen_prints import *
+
 
 class Glacier(object):
     """
@@ -36,32 +35,32 @@ class Glacier(object):
             - type: Boolean
     """
     def __init__(self,
-                access_key_id=None,
-                secret_access_key=None,
-                region_name='us-east-1',
-                bucket=None,
-                name_regex=None,
-                restore_for=5,
-                logs=False):
+                 access_key_id=None,
+                 secret_access_key=None,
+                 region_name='us-east-1',
+                 bucket=None,
+                 name_regex=None,
+                 restore_for=5,
+                 logs=False):
         """
         TODO
         """
         self.logs_enabled = logs
-        if secret_access_key == None or secret_access_key == None or region_name == None:
+        if None not in [secret_access_key, secret_access_key, region_name]:
             raise BadAuthData()
         else:
             setattr(Glacier, '_ACCESS_KEY_ID', access_key_id)
             setattr(Glacier, '_SECRET_ACCESS_KEY', secret_access_key)
             setattr(Glacier, '_REGION_NAME', region_name)
 
-        if bucket == None or name_regex == None:
+        if type(bucket) is None or type(name_regex) is None:
             raise BadFileOrBucket(bucket, name_regex)
         else:
             setattr(Glacier, '_BUCKET_NAME', bucket)
             setattr(Glacier, '_NAME_REGEX', name_regex)
             setattr(Glacier, '_STORE_CLASS', 'GLACIER')
 
-        if not type(restore_for) is int or restore_for not in range (1,10):
+        if not type(restore_for) is int or restore_for not in range(1, 10):
             raise BadRestoreDays
         else:
             setattr(Glacier,
@@ -70,8 +69,9 @@ class Glacier(object):
         try:
             setattr(Glacier,
                     '_s3',
-                    boto.connect_s3(aws_access_key_id=self._ACCESS_KEY_ID,
-                                    aws_secret_access_key=self._SECRET_ACCESS_KEY))
+                    boto.connect_s3(
+                        aws_access_key_id=self._ACCESS_KEY_ID,
+                        aws_secret_access_key=self._SECRET_ACCESS_KEY))
         except Exception as e:
             raise BadAuthData(self._ACCESS_KEY_ID,
                               self._SECRET_ACCESS_KEY,
@@ -96,7 +96,7 @@ class Glacier(object):
                 - Type: Boolean.
         """
         if self.logs_enabled:
-            print '{tE}: {m}'.format(m=msg, tE= 'ERROR' if error else 'INFO')
+            print '{tE}: {m}'.format(m=msg, tE='ERROR' if error else 'INFO')
 
     def restore_file(self, filename, days=None):
         """
@@ -122,8 +122,8 @@ class Glacier(object):
                  -- Sobrecarga: NoneType.
                  -- Explicito: int.
         """
-        d = self._RESTORE_FOR if days == None else days
-        if re.search(self._NAME_REGEX, filename) == None:
+        d = self._RESTORE_FOR if type(days) is None else days
+        if type(re.search(self._NAME_REGEX, filename)) is None:
             self._log(mensages.BAD_FILENAME.format(f=filename), True)
             return False
         try:
@@ -134,8 +134,8 @@ class Glacier(object):
         try:
             key.restore(days=d)
         except Exception:
-            print e
-            self._log(mensages.FILE_EXISTS_BUT_NOT_AVAILABLE_GLACIER.format(f=filename), True)
+            m = mensages.FILE_EXISTS_BUT_NOT_AVAILABLE_GLACIER
+            self._log(m.format(f=filename), True)
             return False
         return True
 
@@ -157,18 +157,21 @@ class Glacier(object):
               - Recive: True o False
               - Type: Boolean
         """
-        if list_of_files==None or not type(list_of_files) is list:
+        if type(list_of_files) is None or not type(list_of_files) is list:
             raise BadFileListToRestore
         else:
             for filename in list_of_files:
                 if self.restore_file(filename):
                     if self.is_available(filename):
-                        self._log(mensages.FILE_READY_FOR_DOWNLOAD.format(f=filename))
+                        m = mensages.FILE_READY_FOR_DOWNLOAD
+                        self._log(m.format(f=filename))
                     else:
-                        self._log(mensages.FILE_EXISTS_BUT_NOT_AVAILABLE.format(f=filename))
+                        m = mensages.FILE_EXISTS_BUT_NOT_AVAILABLE
+                        self._log(m.format(f=filename))
                         return False
                 else:
-                    self._log(mensages.CANT_RESTORE_FILE.format(f=filename), True)
+                    self._log(mensages.CANT_RESTORE_FILE.format(f=filename),
+                              True)
         return True
 
     def dowload_s3_data(self,
@@ -207,7 +210,9 @@ class Glacier(object):
                 s3.Object(bucket, remote_file).delete()
             return True
         except Exception:
-            self._log('s3://{bucket}/{filename} is in GLACIER'.format(bucket=GLACIER, filename=remote_file), True)
+            m = 's3://{bucket}/{filename} is in GLACIER'
+            self._log(m.format(bucket=GLACIER,
+                               filename=remote_file), True)
             return False
 
     def is_available(self, filename):
@@ -235,5 +240,6 @@ class Glacier(object):
         key = self.selected_bucket.get_key(filename)
         file_status = key.ongoing_restore
         msg_status = 'READY' if file_status else 'NOT-READY'
-        self._log(mensages.FILE_NOT_NEED_BE_RESTORED.format(f=filename, s=msg_status))
+        self._log(mensages.FILE_NOT_NEED_BE_RESTORED.format(f=filename,
+                                                            s=msg_status))
         return file_status
