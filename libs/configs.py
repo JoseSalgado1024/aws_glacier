@@ -1,12 +1,13 @@
 #!/usr/bin/python
 # encoding: utf-8
-
 import os
 import ConfigParser
-from  screen_prints import *
+from screen_prints import *
+
 
 # Hidden configs file
-CONFIG_FILE =  os.path.join(os.path.dirname(__file__),'.glacier_foo.cfg')
+CONFIG_FILE = os.path.join(os.path.dirname(__file__),
+                           '.glacier_foo.cfg')
 my_conf = None
 
 # configs keys
@@ -15,6 +16,7 @@ CONFIG_KEY = {
     'AWS_SECRET_ACCESS_KEY': 'AWS_SECRET_ACCESS_KEY',
     'AWS_REGION': 'AWS_REGION'
 }
+
 
 class MyConf(object):
     def __init__(self,
@@ -33,7 +35,8 @@ class MyConf(object):
 
     def _log(self, msg, error=False):
         if self._enable_logs:
-            print '{typeE}: {msg}'.format(msg=msg, typeE= 'ERROR' if error else 'INFO')
+            print '{typeE}: {msg}'.format(msg=msg,
+                                          typeE='ERROR' if error else 'INFO')
 
     def _Load_file(self):
         self._log(mensages.LOADING_CONF.format(f=self._CFG_FILE))
@@ -41,7 +44,8 @@ class MyConf(object):
             self._Config.read(self._CFG_FILE)
             self._log(mensages.FILE_LOAD_FAIL.format(f=self._CFG_FILE))
         except IOError:
-            self._log(mensages.CONF_FILE_LOAD_FAIL.format(f=self._CFG_FILE), True)
+            self._log(mensages.CONF_FILE_LOAD_FAIL.format(f=self._CFG_FILE),
+                      True)
             raise IOError
 
     def _ConfigSectionMap(self, section):
@@ -57,7 +61,6 @@ class MyConf(object):
                 dict1[option] = None
         return dict1
 
-
     def load(self):
         try:
             self._Load_file()
@@ -66,10 +69,12 @@ class MyConf(object):
 
         for sec in self._CONFIG_SEC:
             self._log('loading conf for {sec}'.format(sec=sec['name']))
-            for k in  sec['cfg_keys']:
+            for k in sec['cfg_keys']:
                 self._log('Conf property: {property}'.format(property=k))
                 try:
-                    setattr(MyConf, k, self._ConfigSectionMap(sec['name'])[k.lower()])
+                    setattr(MyConf,
+                            k,
+                            self._ConfigSectionMap(sec['name'])[k.lower()])
                 except Exception as e:
                     self._log('NO EXISTE...', True)
 

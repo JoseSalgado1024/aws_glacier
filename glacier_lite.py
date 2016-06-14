@@ -21,10 +21,11 @@
 """
 
 from libs.glacier import Glacier
-from libs.configs import  my_conf
+from libs.configs import my_conf
 import argparse
 import os
 import csv
+
 
 def get_args():
     """Funcion encargada de cargar los argumentos requeridos para el script."""
@@ -68,14 +69,15 @@ def main():
         storage_class = line['storage_class'].replace(' ', '')
         filename = line['filename'].replace(' ', '')
         if storage_class == 'GLACIER':
-            print 'file: \"{f}\" Added to queue , (storage_class=\"{c}\")'.format(f=filename,
-                                                                                  c=storage_class)
+            print 'file: \"{f}\" Added to queue, (storage_class=\"{c}\")'\
+                ''.format(f=filename,
+                          c=storage_class)
             to_download.append(filename)
         else:
-            print 'file: \"{f}\" Skyped, storage_class=\"{c}\"'.format(f=filename,
-                                                                       c=storage_class)
+            print 'file: \"{f}\" Skyped, storage_class=\"{c}\"'\
+                ''.format(f=filename,
+                          c=storage_class)
     glacier.restore_list_of_files(to_download)
-
 
 
 if __name__ == '__main__':
